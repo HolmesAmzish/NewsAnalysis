@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ article[1] }}</title> <!-- Use article title as the page title -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <!-- Header with article title -->
+        <div class="text-center mb-4">
+            <h1 class="display-6">{{ article[1] }}</h1>
+            <p class="lead text-muted">发布于 {{ article[3] }}</p>
+        </div>
+
+        <!-- Article content section -->
+        <div class="card shadow-sm mb-5">
+            <div class="card-body">
+                <h5 class="card-title">文章内容</h5>
+                <p class="card-text">{{ article[2] }}</p>
+            </div>
+        </div>
+
+        <!-- Article URL section -->
+        <div class="mb-4">
+            <h5>原地址:</h5>
+            <p><a href="{{ article[4] }}" class="btn btn-link" target="_blank">{{ article[4] }}</a></p>
+        </div>
+
+        <!-- Back to Dashboard Button -->
+        <div class="text-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary">返回控制面板</a>
+        </div><br>
+    </div>
+
+    <!-- Bootstrap JS (Optional for certain features like modals, dropdowns, etc.) -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

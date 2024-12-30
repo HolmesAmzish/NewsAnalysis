@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制面板</title>
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            height: 100vh;
+            width: 200px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: #343a40;
+            padding-top: 1rem;
+        }
+        .sidebar .nav-link {
+            color: #fff;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+        .sidebar .nav-link:hover {
+            background-color: #495057;
+        }
+        .main-content {
+            margin-left: 260px;
+            padding: 2rem;
+        }
+        .image-container img {
+            width: 100%;
+            height: auto;
+            margin-bottom: 1rem;
+        }
+        .article-list {
+            margin-top: 2rem;
+        }
+        /* 遮罩层背景调整 */
+        .modal-backdrop {
+            opacity: 0.5 !important; /* 调整模态框遮罩的透明度 */
+        }
+    </style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <h4 class="text-center text-light">导航菜单</h4><br>
+    <ul class="nav flex-column text-center">
+        <li class="nav-item">
+            <a class="nav-link" href="/dashboard">首页</a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link text-light" data-bs-toggle="modal" data-bs-target="#addArticleModal">
+                添加文章
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link text-light" data-bs-toggle="modal" data-bs-target="#updateNewsModal">
+                检查更新
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" href="#">文章分析</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">设置</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="/logout">退出登录</a>
+        </li>
+    </ul>
+</div>
+
+<!-- 主内容区 -->
+<div class="main-content">
+    <div class="container">
+        <h2 class="mb-4">控制面板</h2>
+
+        <!-- 图像展示区域 -->
+        <div class="row image-container">
+            <div class="col-md-6">
+                <img src="https://via.placeholder.com/600x400" alt="图像1">
+            </div>
+            <div class="col-md-6">
+                <img src="https://via.placeholder.com/600x400" alt="图像2">
+            </div>
+        </div>
+
+        <!-- article list -->
+        <div class="article-list">
+            <h3>文章列表</h3>
+            <ul class="list-group">
+                {% for article in articles %}
+                <li class="list-group-item">
+                    <a href="/article/{{ article[0] }}">{{ article[1] }}</a>
+                    <small class="text-muted float-end">{{ article[2] }}</small>
+                </li>
+                {% else %}
+                <li class="list-group-item">暂无文章</li>
+                {% endfor %}
+            </ul>
+
+            <!-- page number -->
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if page_id == 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('dashboard', page_id=page_id - 1) }}" tabindex="-1">上一页</a>
+                    </li>
+                    {% if page_id > 2 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('dashboard', page_id=page_id - 2) }}" tabindex="-1">{{ page_id - 2}}</a>
+                        </li>
+                    {% endif %}
+                    {% if page_id > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('dashboard', page_id=page_id - 1) }}" tabindex="-1">{{ page_id - 1 }}</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <a class="page-link" href="#">{{ page_id }}</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('dashboard', page_id=page_id + 1) }}">{{ page_id + 1 }}</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('dashboard', page_id=page_id + 2) }}">{{ page_id + 2 }}</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('dashboard', page_id=page_id + 1) }}">下一页</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+</div>
+
+<!-- module for get news by url link -->
+<div class="modal fade" id="addArticleModal" tabindex="-1" aria-labelledby="addArticleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addArticleModalLabel">添加文章</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="urlForm">
+                    <div class="mb-3">
+                        <label for="url" class="form-label">文章 URL</label>
+                        <input type="url" class="form-control" id="url" placeholder="请输入文章的URL" required>
+                    </div>
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-primary" id="crawlButton">爬取</button>
+                    </div>
+                </form>
+            <div id="statusMessage" class="alert d-none"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 更新新闻模态框 -->
+<div class="modal fade" id="updateNewsModal" tabindex="-1" aria-labelledby="updateNewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateNewsModalLabel">更新新闻</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>点击按钮以开始更新新闻。</p>
+                <button id="updateButton" class="btn btn-primary">更新新闻</button>
+                <div id="updateStatus" class="mt-3">
+                    <!-- 动态更新的状态 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="/static/js/bootstrap.bundle.js"></script>
+
+
+<script>
+document.getElementById('crawlButton').addEventListener('click', function () {
+    var url = document.getElementById('url').value;
+    var statusMessage = document.getElementById('statusMessage');
+
+    if (!url) {
+        statusMessage.textContent = '请输入有效的URL！';
+        statusMessage.classList.add('alert-danger');
+        statusMessage.classList.remove('d-none');
+        return;
+    }
+
+    statusMessage.classList.remove('d-none');
+    statusMessage.textContent = '正在爬取...';
+    statusMessage.classList.remove('alert-danger');
+    statusMessage.classList.add('alert-info');
+
+    fetch('/crawl_news', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: url })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusMessage.textContent = '新闻爬取成功并已保存！';
+            statusMessage.classList.remove('alert-info');
+            statusMessage.classList.add('alert-success');
+        } else {
+            statusMessage.textContent = '爬取失败，请检查URL！';
+            statusMessage.classList.remove('alert-info');
+            statusMessage.classList.add('alert-danger');
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        statusMessage.textContent = '发生错误，请稍后再试！';
+        statusMessage.classList.remove('alert-info');
+        statusMessage.classList.add('alert-danger');
+    });
+});
+</script>
+
+    <script>
+    document.getElementById('updateButton').addEventListener('click', function () {
+        var updateStatus = document.getElementById('updateStatus');
+        updateStatus.textContent = '正在更新新闻...';
+        updateStatus.classList.remove('text-danger', 'text-success');
+        updateStatus.classList.add('text-info');
+
+        // 发送请求到后端进行新闻更新
+        fetch('/update_news', {  // 假设 '/update_news' 为后台API
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStatus.textContent = '新闻更新成功！';
+                updateStatus.classList.remove('text-info');
+                updateStatus.classList.add('text-success');
+            } else {
+                updateStatus.textContent = '更新失败，请稍后再试！';
+                updateStatus.classList.remove('text-info');
+                updateStatus.classList.add('text-danger');
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            updateStatus.textContent = '发生错误，请稍后再试！';
+            updateStatus.classList.remove('text-info');
+            updateStatus.classList.add('text-danger');
+        });
+    });
+</script>
+
+
+</body>
+</html>
