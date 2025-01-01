@@ -11,12 +11,24 @@ from bs4 import BeautifulSoup
 import datetime
 from webdriver_manager.chrome import ChromeDriverManager
 import re
+import os
 
-options = webdriver.ChromeOptions()
-options.add_argument("--headless")
-options.add_argument("--disable-blink-features=AutomationControlled")
+DRIVER_PATH = "./chromedriver"  # 路径可以自定义
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+import shutil
+
+def get_driver():
+    if not os.path.exists(DRIVER_PATH):
+        driver_path = ChromeDriverManager().install()
+        shutil.copy(driver_path, DRIVER_PATH)  # 使用复制代替重命名
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--disable-blink-features=AutomationControlled")
+
+    return webdriver.Chrome(service=Service(DRIVER_PATH), options=options)
+
+driver = get_driver()
 
 
 def get_links():
@@ -40,7 +52,7 @@ def save_news_html(news_list):
     :param news_list: List of news urls
     :return None
     """
-    for news_link in news_list:
+    for news_link in news_list[:8]:
         driver.get(news_link)
         driver.implicitly_wait(5)
         content = driver.page_source
@@ -85,7 +97,9 @@ def get_news_content_from_url(url):
         '%Y年%m月%d日 %H:%M'
     )
 
-    news_time = news_time_temp.strftime('%Y-%m-%d %H:%M:%S')
+    news_time = (news_time_temp
+
+                 .strftime('%Y-%m-%d %H:%M:%S'))
     news_dict['time'] = news_time
 
     news_article = soup.select('div#artibody p')

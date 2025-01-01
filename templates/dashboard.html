@@ -76,25 +76,22 @@
 <!-- 主内容区 -->
 <div class="main-content">
     <div class="container">
-        <h2 class="mb-4">控制面板</h2>
+{#        <h2 class="mb-4">控制面板</h2>#}
+{#        <div class="row image-container">#}
+{#            <div class="col-md-6">#}
+{#                <img src="https://via.placeholder.com/600x400" alt="图像1">#}
+{#            </div>#}
+{#            <div class="col-md-6">#}
+{#                <img src="https://via.placeholder.com/600x400" alt="图像2">#}
+{#            </div>#}
+{#        </div>#}
 
-        <!-- 图像展示区域 -->
-        <div class="row image-container">
-            <div class="col-md-6">
-                <img src="https://via.placeholder.com/600x400" alt="图像1">
-            </div>
-            <div class="col-md-6">
-                <img src="https://via.placeholder.com/600x400" alt="图像2">
-            </div>
-        </div>
-
-        <!-- article list -->
         <div class="article-list">
             <h3>文章列表</h3>
             <ul class="list-group">
                 {% for article in articles %}
                 <li class="list-group-item">
-                    <a href="/article/{{ article[0] }}">{{ article[1] }}</a>
+                    <a href="/analysis/{{ article[0] }}">{{ article[1] }}</a>
                     <small class="text-muted float-end">{{ article[2] }}</small>
                 </li>
                 {% else %}
@@ -163,23 +160,23 @@
 
 
 <!-- 更新新闻模态框 -->
-<div class="modal fade" id="updateNewsModal" tabindex="-1" aria-labelledby="updateNewsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div id="updateNewsModal" class="modal fade" tabindex="-1" aria-labelledby="updateNewsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="updateNewsModalLabel">更新新闻</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>点击按钮以开始更新新闻。</p>
-                <button id="updateButton" class="btn btn-primary">更新新闻</button>
-                <div id="updateStatus" class="mt-3">
-                    <!-- 动态更新的状态 -->
-                </div>
+                <button id="updateButton" class="btn btn-primary mb-3">开始更新</button>
+                <ul id="updateStatusList" class="list-group">
+                    <!-- 动态生成状态列表 -->
+                </ul>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- Bootstrap JS -->
 <script src="/static/js/bootstrap.bundle.js"></script>
@@ -230,38 +227,53 @@ document.getElementById('crawlButton').addEventListener('click', function () {
 });
 </script>
 
-    <script>
+<script>
     document.getElementById('updateButton').addEventListener('click', function () {
-        var updateStatus = document.getElementById('updateStatus');
-        updateStatus.textContent = '正在更新新闻...';
-        updateStatus.classList.remove('text-danger', 'text-success');
-        updateStatus.classList.add('text-info');
+        var updateStatusList = document.getElementById('updateStatusList');
+        updateStatusList.innerHTML = ''; // 清空状态列表
+        var statusItem = document.createElement('li');
+        statusItem.textContent = '正在获取链接...';
+        statusItem.classList.add('list-group-item', 'text-info');
+        updateStatusList.appendChild(statusItem);
 
-        // 发送请求到后端进行新闻更新
-        fetch('/update_news', {  // 假设 '/update_news' 为后台API
+        // 发起更新请求
+        fetch('/update_news', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updateStatus.textContent = '新闻更新成功！';
-                updateStatus.classList.remove('text-info');
-                updateStatus.classList.add('text-success');
-            } else {
-                updateStatus.textContent = '更新失败，请稍后再试！';
-                updateStatus.classList.remove('text-info');
-                updateStatus.classList.add('text-danger');
-            }
-        })
-        .catch(error => {
-            console.error(error);
-            updateStatus.textContent = '发生错误，请稍后再试！';
-            updateStatus.classList.remove('text-info');
-            updateStatus.classList.add('text-danger');
-        });
+            .then(response => response.json())
+            .then(data => {
+                updateStatusList.innerHTML = ''; // 清空状态列表
+                if (data.success) {
+                    data.status_list.forEach(item => {
+                        var listItem = document.createElement('li');
+                        listItem.textContent = `${item.url} - ${item.status}`;
+                        if (item.status === 'Completed') {
+                            listItem.classList.add('list-group-item', 'text-success');
+                        } else if (item.status === 'Duplicate') {
+                            listItem.classList.add('list-group-item', 'text-warning');
+                        } else {
+                            listItem.classList.add('list-group-item', 'text-danger');
+                        }
+                        updateStatusList.appendChild(listItem);
+                    });
+                } else {
+                    var errorItem = document.createElement('li');
+                    errorItem.textContent = data.message || '更新失败';
+                    errorItem.classList.add('list-group-item', 'text-danger');
+                    updateStatusList.appendChild(errorItem);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                updateStatusList.innerHTML = '';
+                var errorItem = document.createElement('li');
+                errorItem.textContent = '发生错误，请稍后再试！';
+                errorItem.classList.add('list-group-item', 'text-danger');
+                updateStatusList.appendChild(errorItem);
+            });
     });
 </script>
 

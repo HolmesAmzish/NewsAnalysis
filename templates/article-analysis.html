@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ article[1] }}</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <title>控制面板</title>
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
     <style>
         .sidebar {
             height: 100vh;
@@ -24,7 +24,7 @@
             background-color: #495057;
         }
         .main-content {
-            margin-left: 200px;  /* 与侧边栏宽度对齐 */
+            margin-left: 200px;  /* 设置与侧边栏宽度对齐 */
             padding: 2rem;
         }
         .image-container img {
@@ -50,7 +50,7 @@
         </li>
 
         <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('analysis', article_id=article[0]) }}">文章分析</a>
+            <a class="nav-link" href="/article/{{ article_id }}">查看原文</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#">设置</a>
@@ -63,30 +63,33 @@
 
 <div class="main-content">
     <div class="container mt-5">
-        <div class="text-center mb-4">
-            <h1 class="display-6">{{ article[1] }}</h1>
-            <p class="lead text-muted">发布于 {{ article[3] }}</p>
-        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-10 text-center">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title">文章摘要</h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">{{ article_summary }}</p>
+                    </div>
+                </div>
 
-        <div class="card shadow-sm mb-5">
-            <div class="card-body">
-                <h5 class="card-title">文章内容</h5>
-                <p class="card-text">{{ article[2] }}</p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3>词频直方图</h3>
+                        <img src="data:image/png;base64,{{ img_hist_data }}" alt="Histogram" class="img-fluid">
+                    </div>
+                    <div class="col-md-6">
+                        <h3>词云图</h3>
+                        <img src="data:image/png;base64,{{ img_wordcloud_data }}" alt="Word Cloud" class="img-fluid">
+                    </div>
+                </div>
+
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary mt-4">返回控制台</a>
             </div>
         </div>
-
-        <div class="mb-4">
-            <h5>原地址:</h5>
-            <p><a href="{{ article[4] }}" class="btn btn-link" target="_blank">{{ article[4] }}</a></p>
-        </div>
-
-        <div class="text-center">
-            <a href="{{ url_for('analysis', article_id=article[0]) }}" class="btn btn-primary">文章分析</a>
-        </div><br>
     </div>
 </div>
 
-<!-- Bootstrap JS (Optional for certain features like modals, dropdowns, etc.) -->
-<script src="/static/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
