@@ -12,16 +12,15 @@ import datetime
 from webdriver_manager.chrome import ChromeDriverManager
 import re
 import os
-
-DRIVER_PATH = "./chromedriver"  # 路径可以自定义
-
-
 import shutil
+
+DRIVER_PATH = "./chromedriver"
+
 
 def get_driver():
     if not os.path.exists(DRIVER_PATH):
         driver_path = ChromeDriverManager().install()
-        shutil.copy(driver_path, DRIVER_PATH)  # 使用复制代替重命名
+        shutil.copy(driver_path, DRIVER_PATH)
     options = webdriver.ChromeOptions()
     options.add_argument("--headless")
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -52,7 +51,7 @@ def save_news_html(news_list):
     :param news_list: List of news urls
     :return None
     """
-    for news_link in news_list[:8]:
+    for news_link in news_list:
         driver.get(news_link)
         driver.implicitly_wait(5)
         content = driver.page_source

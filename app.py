@@ -1,9 +1,16 @@
+"""
+file: app.py
+Main flask program for project
+version: 1.5 2025-01-02
+since: 2024-12-28
+author: Cacc
+"""
+
 from flask import Flask, render_template, redirect, url_for, session, request, jsonify, abort
 import db
 import news_getter
 import base64
 import analyzer
-import requests
 
 app = Flask(__name__)
 
@@ -42,30 +49,40 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/dashboard')
-@app.route('/dashboard/<int:page_id>')
+@app.route('/dashboard', methods=['GET'])
+@app.route('/dashboard/<int:page_id>', methods=['GET'])
 def dashboard(page_id=1):
     """
     Dashboard page
+    :param page_id:
+    :return:
     """
     if 'logged_in' not in session:
         return redirect(url_for('login'))
 
-    # Ensure the page_id is valid and not less than 1
-    if page_id < 1:
-        page_id = 1
+    query = request.args.get('query')
+    if query:
+        articles = db.search_news_by_title(query, page_id)
+    else:
+        articles = db.get_all_news(page_id)
 
-    # Fetch articles with pagination
-    articles = db.get_all_news(page_id)
+    return render_template('dashboard.html', articles=articles, page_id=page_id, query=query)
 
-    return render_template('dashboard.html', articles=articles, page_id=page_id)
+
+@app.route('/search', methods=['GET'])
+def search():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+
+    query = request.args.get('query')
+    page_id = request.args.get('page_id', 1, type=int)
+    articles = db.search_news_by_title(query, page_id)
+
+    return render_template('dashboard.html', articles=articles, page_id=page_id, query=query)
 
 
 @app.route('/crawl_news', methods=['POST'])
 def crawl_news():
-    """
-    接收 URL 并爬取新闻，将内容保存到数据库
-    """
     if 'logged_in' not in session:
         return redirect(url_for('login'))
 
@@ -76,12 +93,8 @@ def crawl_news():
         return jsonify({'success': False, 'message': 'URL is required'})
 
     try:
-        # 调用爬虫函数获取新闻内容，传递url参数
         news_content = news_getter.get_news_content_from_url(url)
-
-        # 将新闻保存到数据库
         db.save_news_to_db(news_content)
-
         return jsonify({'success': True, 'message': 'News crawled and saved successfully!'})
 
     except Exception as e:
@@ -96,7 +109,6 @@ def update_news():
     Dynamically provide status updates to the frontend.
     """
     try:
-        # Step 1: Get links using get_links
         news_links = news_getter.get_links()
         if not news_links:
             return jsonify({'success': False, 'message': 'No new links found'})
@@ -104,10 +116,10 @@ def update_news():
         status_list = []
         for link in news_links:
             try:
-                # Step 2: Get news content
+                # Get news content
                 news_content = news_getter.get_news_content_from_url(link)
 
-                # Step 3: Save news to the database
+                # Save news to the database
                 saved = db.save_news_to_db(news_content)
                 status_list.append({'url': link, 'status': 'Completed'})
             except Exception as e:
@@ -127,7 +139,6 @@ def article(article_id):
     if not article:
         abort(404)
 
-    # 渲染模板，传递文章数据
     return render_template('article.html', article=article_content)
 
 
@@ -137,8 +148,7 @@ def analysis(article_id):
     if not article:
         abort(404)
 
-    # 获取文章摘要
-    article_summary = analyzer.summarize_article(article[2])  # 传入文章内容，返回摘要
+    article_summary = analyzer.summarize_article(article[2])
 
     word_freq = analyzer.get_word_freq(article[2])
     img_hist = analyzer.plot_hist(word_freq)
@@ -154,7 +164,7 @@ def analysis(article_id):
         'article-analysis.html',
         img_hist_data=img_hist_base64,
         img_wordcloud_data=img_wordcloud_base64,
-        article_summary=article_summary,  # 传递文章摘要
+        article_summary=article_summary,
         article_id=article[0],
     )
 
